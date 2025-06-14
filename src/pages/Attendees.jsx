@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DataTable from '../components/DataTable';
 import SlideOver from '../components/SlideOver';
+import SkeletonLoader from '../components/SkeletonLoader';
 import { TextInput, SelectInput, TextArea, Checkbox, FormActions } from '../components/FormElements';
 import { endpoints } from '../config/api';
 
@@ -10,6 +11,7 @@ function Attendees() {
   const [events, setEvents] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentAttendee, setCurrentAttendee] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -47,12 +49,15 @@ function Attendees() {
   }, [currentPage]);
 
   const fetchAttendees = async () => {
+    setLoading(true);
     try {
       const response = await axios.get(`${endpoints.attendees}?page=${currentPage}`);
       setAttendees(response.data);
       setTotalPages(response.data.total_pages);
     } catch (error) {
       console.error('Error fetching attendees:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,17 +148,21 @@ function Attendees() {
 
   return (
     <div>
-      <DataTable
-        title="Attendees"
-        columns={columns}
-        data={attendees}
-        onAdd={handleAdd}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      {loading ? (
+        <SkeletonLoader type="table" rows={5} columns={5} />
+      ) : (
+        <DataTable
+          title="Attendees"
+          columns={columns}
+          data={attendees}
+          onAdd={handleAdd}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
 
       <SlideOver isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={currentAttendee ? 'Edit Attendee' : 'Add Attendee'}>
         <form onSubmit={handleSubmit} className="space-y-6">

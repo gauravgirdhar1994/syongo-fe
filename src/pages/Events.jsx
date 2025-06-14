@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import SlideOver from '../components/SlideOver';
+import SkeletonLoader from '../components/SkeletonLoader';
 import { TextInput, SelectInput, TextArea, Checkbox, FormActions } from '../components/FormElements';
 import { endpoints } from '../config/api';
 
@@ -13,6 +14,7 @@ function Events() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('date');
   const [failedImages, setFailedImages] = useState(new Set());
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -65,12 +67,15 @@ function Events() {
   }, [currentPage]);
 
   const fetchEvents = async () => {
+    setLoading(true);
     try {
       const response = await axios.get(`${endpoints.events}?page=${currentPage}`);
       setEvents(response.data);
       setTotalPages(response.data.total_pages);
     } catch (error) {
       console.error('Error fetching events:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -259,88 +264,92 @@ function Events() {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sortedEvents.map((event) => (
-          <div
-            key={event.id}
-            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
-          >
-            <div className="relative h-48">
-              {event.bannerImage && !failedImages.has(event.id) ? (
-                <img
-                  src={event.bannerImage}
-                  alt={event.name}
-                  className="w-full h-full object-cover"
-                  onError={() => handleImageError(event.id)}
-                />
-              ) : (
-                <div className={`w-full h-full ${generateEventColor(event.name)} flex items-center justify-center`}>
-                  <span className="text-white text-2xl font-bold px-4 text-center">
-                    {event.name}
+      {loading ? (
+        <SkeletonLoader type="grid" rows={6} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sortedEvents.map((event) => (
+            <div
+              key={event.id}
+              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+            >
+              <div className="relative h-48">
+                {event.bannerImage && !failedImages.has(event.id) ? (
+                  <img
+                    src={event.bannerImage}
+                    alt={event.name}
+                    className="w-full h-full object-cover"
+                    onError={() => handleImageError(event.id)}
+                  />
+                ) : (
+                  <div className={`w-full h-full ${generateEventColor(event.name)} flex items-center justify-center`}>
+                    <span className="text-white text-2xl font-bold px-4 text-center">
+                      {event.name}
+                    </span>
+                  </div>
+                )}
+                <div className="absolute top-4 right-4">
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(event.status)}`}>
+                    {event.status}
                   </span>
                 </div>
-              )}
-              <div className="absolute top-4 right-4">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(event.status)}`}>
-                  {event.status}
-                </span>
               </div>
-            </div>
-            <div className="p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">{event.name}</h3>
-              <div className="flex items-center text-gray-600 mb-4">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                {formatDate(event.date)}
-              </div>
-              <div className="flex items-center text-gray-600 mb-4">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {event.isOnline ? 'Online Event' : event.location}
-              </div>
-              <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-500">
-                  {event.registeredAttendeesCount} / {event.maxAttendees} attendees
+              <div className="p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{event.name}</h3>
+                <div className="flex items-center text-gray-600 mb-4">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  {formatDate(event.date)}
                 </div>
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => handleEdit(event)}
-                    className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
-                    title="Edit Event"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleDelete(event)}
-                    className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                    title="Delete Event"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleView(event)}
-                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                    title="View Event Details"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  </button>
+                <div className="flex items-center text-gray-600 mb-4">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {event.isOnline ? 'Online Event' : event.location}
+                </div>
+                <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
+                <div className="flex justify-between items-center">
+                  <div className="text-sm text-gray-500">
+                    {event.registeredAttendeesCount} / {event.maxAttendees} attendees
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => handleEdit(event)}
+                      className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
+                      title="Edit Event"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(event)}
+                      className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      title="Delete Event"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleView(event)}
+                      className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                      title="View Event Details"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
       <div className="mt-8 flex justify-center">

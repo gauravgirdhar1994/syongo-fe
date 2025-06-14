@@ -24,6 +24,7 @@ import axios from 'axios';
 import { endpoints } from '../config/api';
 import { Tab } from '@headlessui/react';
 import { motion } from 'framer-motion';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 interface Event {
   id?: string;
@@ -735,8 +736,16 @@ const EventView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <SkeletonLoader type="list" rows={1} />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <SkeletonLoader type="list" rows={4} />
+        </div>
+        <div className="mb-8">
+          <SkeletonLoader type="table" rows={5} columns={4} />
+        </div>
       </div>
     );
   }

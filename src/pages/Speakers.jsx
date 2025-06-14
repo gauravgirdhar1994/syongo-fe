@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DataTable from '../components/DataTable';
 import SlideOver from '../components/SlideOver';
+import SkeletonLoader from '../components/SkeletonLoader';
 import { TextInput, SelectInput, TextArea, Checkbox, FormActions } from '../components/FormElements';
 import { endpoints } from '../config/api';
 import { 
@@ -98,6 +99,7 @@ function Speakers() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
 
   const columns = [
     { key: 'name', label: 'Name' },
@@ -112,6 +114,7 @@ function Speakers() {
   }, [currentPage, searchQuery, filters]);
 
   const fetchSpeakers = async () => {
+    setLoading(true);
     try {
       const queryParams = new URLSearchParams({
         page: currentPage,
@@ -123,6 +126,8 @@ function Speakers() {
       setTotalPages(response.data.total_pages);
     } catch (error) {
       console.error('Error fetching speakers:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -356,20 +361,28 @@ function Speakers() {
           </div>
         </div>
 
-        {viewMode === 'grid' ? (
-          renderGridView()
+        {loading ? (
+          viewMode === 'grid' ? (
+            <SkeletonLoader type="grid" rows={8} />
+          ) : (
+            <SkeletonLoader type="table" rows={5} columns={5} />
+          )
         ) : (
-          <DataTable
-            title="Speakers"
-            columns={columns}
-            data={speakers}
-            onAdd={handleAdd}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
+          viewMode === 'grid' ? (
+            renderGridView()
+          ) : (
+            <DataTable
+              title="Speakers"
+              columns={columns}
+              data={speakers}
+              onAdd={handleAdd}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )
         )}
       </div>
 
