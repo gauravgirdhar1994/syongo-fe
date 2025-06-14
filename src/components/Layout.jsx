@@ -17,7 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: ChartBarIcon },
+  { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
   { name: 'Events', href: '/events', icon: CalendarIcon },
   { name: 'Speakers', href: '/speakers', icon: UserGroupIcon },
   { name: 'Agenda Items', href: '/agenda-items', icon: ClockIcon },
